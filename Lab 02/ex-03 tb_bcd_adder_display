@@ -1,0 +1,116 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity tb_bcd_adder_display is
+end tb_bcd_adder_display;
+
+architecture Behavioral of tb_bcd_adder_display is
+    -- Constants
+    constant clk_period : time := 10 ns;  -- Clock period
+
+    -- Signals
+    signal A, B : STD_LOGIC_VECTOR(3 downto 0);
+    signal Cin : STD_LOGIC;
+    signal Sum : STD_LOGIC_VECTOR(3 downto 0);
+    signal Cout : STD_LOGIC;
+    signal BCD_result : STD_LOGIC_VECTOR(3 downto 0);
+    signal seg_out : STD_LOGIC_VECTOR(6 downto 0);
+
+    -- Components
+    component bcd_adder
+        Port (
+            A : in STD_LOGIC_VECTOR(3 downto 0);
+            B : in STD_LOGIC_VECTOR(3 downto 0);
+            Cin : in STD_LOGIC;
+            Sum : out STD_LOGIC_VECTOR(3 downto 0);
+            Cout : out STD_LOGIC
+        );
+    end component;
+
+    component seven_segment_decoder
+        Port (
+            BCD_in : in STD_LOGIC_VECTOR(3 downto 0);
+            seg_out : out STD_LOGIC_VECTOR(6 downto 0)
+        );
+    end component;
+
+    -- Clock process
+    signal clk : STD_LOGIC := '0';
+begin
+
+    -- Instantiate BCD Adder
+    uut_bcd_adder : bcd_adder
+        port map (
+            A => A,
+            B => B,
+            Cin => Cin,
+            Sum => Sum,
+            Cout => Cout
+        );
+
+    -- Instantiate 7-Segment Decoder
+    uut_seven_segment_decoder : seven_segment_decoder
+        port map (
+            BCD_in => BCD_result,
+            seg_out => seg_out
+        );
+
+    -- Stimulus process
+    stim_proc : process
+    begin
+        -- Test case 1: 3 + 5 (8)
+        A <= "0011"; B <= "0101"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 2: 9 + 5 (14, should overflow with Cout)
+        A <= "1001"; B <= "0101"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 3: 8 + 8 (16)
+        A <= "1000"; B <= "1000"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 4: 7 + 3 (10)
+        A <= "0111"; B <= "0011"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 5: 9 + 9 (18, should overflow with Cout)
+        A <= "1001"; B <= "1001"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 6: 7 + 9 (16)
+        A <= "0111"; B <= "1001"; Cin <= '0';
+        wait for clk_period;
+
+        -- Test case 7: 7 + 9 + Cin (17)
+        A <= "0111"; B <= "1001"; Cin <= '1';
+        wait for clk_period;
+
+        -- Test case 8: 8 + 8 + Cin (17)
+        A <= "1000"; B <= "1000"; Cin <= '1';
+        wait for clk_period;
+
+        -- Finish simulation
+        wait;
+    end process stim_proc;
+
+    -- Clock process (10 ns period)
+    clk_process : process
+    begin
+        clk <= '0';
+        wait for clk_period / 2;
+        clk <= '1';
+        wait for clk_period / 2;
+    end process clk_process;
+
+    -- Assign BCD_result based on Sum and Cout
+    process (Sum, Cout)
+    begin
+        if Cout = '1' then
+            BCD_result <= "0001";  -- Represents '1' in BCD
+        else
+            BCD_result <= Sum;
+        end if;
+    end process;
+
+end Behavioral;
