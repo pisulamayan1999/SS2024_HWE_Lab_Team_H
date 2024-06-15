@@ -1,0 +1,64 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity ripple_carry_adder is
+    Port (
+        a : in STD_LOGIC_VECTOR(3 downto 0);
+        b : in STD_LOGIC_VECTOR(3 downto 0);
+        cin : in STD_LOGIC;
+        sum : out STD_LOGIC_VECTOR(3 downto 0);
+        cout : out STD_LOGIC
+    );
+end ripple_carry_adder;
+
+architecture Behavioral of ripple_carry_adder is
+    component full_adder
+        Port (
+            a : in STD_LOGIC;
+            b : in STD_LOGIC;
+            cin : in STD_LOGIC;
+            sum : out STD_LOGIC;
+            cout : out STD_LOGIC
+        );
+    end component;
+
+    signal c : STD_LOGIC_VECTOR(3 downto 0);  -- Internal carry signals
+
+begin
+    -- First full adder (least significant bit)
+    FA0: full_adder Port Map (
+        a => a(0),
+        b => b(0),
+        cin => cin,
+        sum => sum(0),
+        cout => c(0)
+    );
+
+    -- Second full adder
+    FA1: full_adder Port Map (
+        a => a(1),
+        b => b(1),
+        cin => c(0),
+        sum => sum(1),
+        cout => c(1)
+    );
+
+    -- Third full adder
+    FA2: full_adder Port Map (
+        a => a(2),
+        b => b(2),
+        cin => c(1),
+        sum => sum(2),
+        cout => c(2)
+    );
+
+    -- Fourth full adder (most significant bit)
+    FA3: full_adder Port Map (
+        a => a(3),
+        b => b(3),
+        cin => c(2),
+        sum => sum(3),
+        cout => cout
+    );
+
+end Behavioral;
