@@ -1,0 +1,32 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_SIGNED.ALL;
+
+entity bcd_adder is
+    Port ( 
+        A : in STD_LOGIC_VECTOR (3 downto 0);
+        B : in STD_LOGIC_VECTOR (3 downto 0);
+        Cin : in STD_LOGIC;
+        Sum : out STD_LOGIC_VECTOR (3 downto 0);
+        Cout : out STD_LOGIC
+    );
+end bcd_adder;
+
+architecture Behavioral of bcd_adder is
+    signal temp : STD_LOGIC_VECTOR (4 downto 0);
+begin
+
+    temp <= ('0' & A) + ('0' & B) + (Cin & "0000");
+
+    process (temp)
+    begin
+        if temp >= "1010" then
+            temp <= temp + "0110";
+        end if;
+    end process;
+
+    Sum <= temp(3 downto 0);
+    Cout <= temp(4);
+
+end Behavioral;
