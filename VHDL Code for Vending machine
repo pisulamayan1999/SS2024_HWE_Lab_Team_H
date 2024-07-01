@@ -1,0 +1,366 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity vendingmachine is
+  Port(
+    clk_in  : in std_logic;
+    reset   : in std_logic;
+    AN_IN   : out std_logic_vector(7 downto 0);
+    LED_OUT : out std_logic_vector(6 downto 0);
+    SW2     : in std_logic_vector(2 downto 0);
+    SW3     : in std_logic_vector(1 downto 0);
+    SW4     : in std_logic;
+    LED_G, LED_R : out std_logic;
+    SW      : in std_logic_vector(2 downto 0)
+  );
+end vendingmachine;
+
+architecture Behavioral of vendingmachine is
+  signal counter : integer range 0 to 100000 := 0;
+  signal clk_out : std_logic := '0';
+  constant DIVIDER_VALUE : integer := 100000;
+  signal temp : integer range 0 to 9 := 0;
+
+  type StateType is (Idle, item_select, Coin, Dispense);
+  signal next_state : StateType := Idle;
+
+begin
+  -- Clock divider process
+  process (clk_in, reset)
+  begin
+    if reset = '1' then
+      counter <= 0;
+      clk_out <= '0';
+    elsif rising_edge(clk_in) then
+      if counter = DIVIDER_VALUE then
+        counter <= 0;
+        clk_out <= not clk_out;
+        if temp = 9 then
+          temp <= 0;
+        else
+          temp <= temp + 1;
+        end if;
+      else
+        counter <= counter + 1;
+      end if;
+    end if;
+  end process;
+
+  -- State transition process
+  process (SW)
+  begin
+    if SW = "001" then
+      next_state <= Idle;
+    elsif SW = "010" then
+      next_state <= item_select;
+    elsif SW = "100" then
+      next_state <= Coin;
+    elsif SW = "111" then
+      next_state <= Dispense;
+    else
+      next_state <= Idle;
+    end if;
+  end process;
+
+  -- Item selection display process
+  process (SW2, temp)
+  begin
+    if next_state = item_select then
+      if SW2 = "000" then
+        -- Display Fanta
+     if temp = 0 then
+    AN_IN <= "01111111";
+    LED_OUT <= "0001110"; -- F
+elsif temp = 1 then
+    AN_IN <= "10111111";
+    LED_OUT <= "0001000"; -- A
+elsif temp = 2 then
+    AN_IN <= "11011111";
+    LED_OUT <= "0101011"; -- n
+elsif temp = 3 then
+    AN_IN <= "11101111";
+    LED_OUT <= "0000111"; -- T
+    elsif temp = 4 then
+    AN_IN <= "11110111";
+    LED_OUT <= "0001000"; -- A
+elsif temp = 5 then
+    AN_IN <= "11111110";
+    LED_OUT <= "0011001"; -- 4
+else
+    AN_IN <= "11111111";
+    LED_OUT <= "1111111"; -- all segments off
+end if;
+  elsif SW2 = "010" then
+        -- Display SPRITE
+        if temp = 0 then
+          AN_IN <= "01111111";
+          LED_OUT <= "0010010"; --S
+        elsif temp = 1 then
+          AN_IN <= "10111111";
+          LED_OUT <= "0001100"; --P
+        elsif temp = 2 then
+          AN_IN <= "11011111";
+          LED_OUT <= "0101111"; --R
+        elsif temp = 3 then
+          AN_IN <= "11101111"; 
+          LED_OUT <= "1001111"; --I
+        elsif temp = 4 then
+          AN_IN <= "11110111";
+          LED_OUT <= "0000111"; --T
+          elsif temp = 5 then
+    AN_IN <= "11111011";
+    LED_OUT <= "0000110"; --E
+    elsif temp = 6 then
+    AN_IN <= "11111110";
+    LED_OUT <= "0100100"; --2
+        else
+          AN_IN <= "11111111";
+          LED_OUT <= "1111111";
+        end if;
+     elsif SW2 = "001" then
+        -- Display Cafe
+        if temp = 0 then
+    AN_IN <= "01111111";
+    LED_OUT <= "1000110"; -- C
+elsif temp = 1 then
+    AN_IN <= "10111111";
+    LED_OUT <= "0001000"; -- A
+elsif temp = 2 then
+    AN_IN <= "11011111";
+    LED_OUT <= "0001110"; -- F
+elsif temp = 3 then
+    AN_IN <= "11101111";
+    LED_OUT <= "0000110"; -- E
+    elsif temp = 4 then
+    AN_IN <= "11111110";
+    LED_OUT <= "0110000"; -- 3
+else
+    AN_IN <= "11111111";
+    LED_OUT <= "1111111"; -- all segments off
+end if;
+
+      elsif SW2 = "100" then
+        -- Display Candy
+ if temp = 0 then
+    AN_IN <= "01111111";
+    LED_OUT <= "1000110"; -- C
+elsif temp = 1 then
+    AN_IN <= "10111111";
+    LED_OUT <= "0001000"; -- A
+elsif temp = 2 then
+    AN_IN <= "11011111";
+    LED_OUT <= "0101011"; -- n
+elsif temp = 3 then
+    AN_IN <= "11101111";
+    LED_OUT <= "0100001"; -- d
+    elsif temp = 4 then
+    AN_IN <= "11110111";
+    LED_OUT <= "0011001"; -- y
+elsif temp = 5 then
+    AN_IN <= "11111110";
+    LED_OUT <= "1111001"; -- 1
+else
+    AN_IN <= "11111111";
+    LED_OUT <= "1111111"; -- all segments off
+end if;
+      else
+        AN_IN <= "11111111";
+        LED_OUT <= "1111111";
+      end if;
+    elsif next_state = Coin then
+      AN_IN <= "11111110";
+      if SW3 = "00" then
+        if temp = 0 then
+          LED_OUT <= "1001111"; --1
+        else
+          LED_OUT <= "1111111"; 
+        end if;
+      elsif SW3 = "01" then
+        if temp = 0 then
+          LED_OUT <= "0100100"; --2
+        else
+          LED_OUT <= "1111111";
+        end if;
+      elsif SW3 = "10" then
+        if temp = 0 then
+          LED_OUT <= "0110000"; --3
+        else
+          LED_OUT <= "1111111";
+        end if;
+      elsif SW3 = "11" then
+        if temp = 0 then
+          LED_OUT <= "0011001"; --4
+        else
+          LED_OUT <= "1111111";
+        end if;
+      else
+        AN_IN <= "11111111";
+        LED_OUT <= "1111111";
+      end if;
+    elsif next_state = Dispense then
+      if SW4 = '1' then
+        if SW2 = "000" then --Fanta 4
+          if SW3 = "01" then --2
+            AN_IN <= "11111101";
+            LED_OUT <= "0100100"; --2 (red)
+             elsif SW3 = "00" then --1
+            AN_IN <= "11111101";
+            LED_OUT <= "0110000"; --3 (red)
+          elsif SW3 = "10" then --3
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (red)
+          elsif SW3 = "11" then --4
+            AN_IN <= "11111101";
+            LED_OUT <= "1000000"; -- 0 (green)
+          else
+            AN_IN <= "11111111";
+            LED_OUT <= "1111111";
+          end if;
+        elsif SW2 = "001" then --Cafe 3
+          if SW3 = "11" then --4
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (green)
+             elsif SW3 = "00" then --1
+            AN_IN <= "11111101";
+            LED_OUT <= "0100100"; --2 (red)
+             elsif SW3 = "01" then --2
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (red)
+            elsif SW3 = "10" then --3
+            AN_IN <= "11111101";
+            LED_OUT <= "1000000"; --0 (green)
+          else
+            AN_IN <= "11111111";
+            LED_OUT <= "1111111";
+          end if;
+        elsif SW2 = "010" then --Sprite 2
+          if SW3 = "01" then --2
+            AN_IN <= "11111101";
+            LED_OUT <= "1000000"; --0 (green)
+             elsif SW3 = "00" then --1
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (red)
+          elsif SW3 = "10" then --3
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (green)
+          elsif SW3 = "11" then --4
+            AN_IN <= "11111101";
+            LED_OUT <= "0100100"; --2 (green)
+          else
+            AN_IN <= "11111111";
+            LED_OUT <= "1111111";
+          end if;
+        elsif SW2 = "100" then --Candy 1
+          if SW3 = "10" then --3
+            AN_IN <= "11111101";
+            LED_OUT <= "0100100"; --2 (green)
+           elsif SW3 = "00" then --1
+            AN_IN <= "11111101";
+            LED_OUT <= "1000000"; --0 (green)
+            elsif SW3 = "11" then --4
+            AN_IN <= "11111101";
+            LED_OUT <= "0110000"; --3 (green)
+            elsif SW3 = "01" then --2
+            AN_IN <= "11111101";
+            LED_OUT <= "1001111"; --1 (green)
+          else
+            AN_IN <= "11111111";
+            LED_OUT <= "1111111";
+          end if;
+        else
+          AN_IN <= "11111111";
+          LED_OUT <= "1111111";
+        end if;
+      else
+        AN_IN <= "11111111";
+        LED_OUT <= "1111111";
+      end if;
+    end if;
+  end process;
+
+  -- Dispense LED control process
+  process (next_state, SW4, SW2, SW3, clk_out)
+  begin
+    if next_state = Dispense then
+      if SW4 = '1' then
+        if SW2 = "000" then
+          if SW3 = "00" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "01" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "10" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "11" then
+            LED_G <= '1';
+            LED_R <= '0';
+          else
+            LED_G <= '1';
+            LED_R <= '1';
+          end if;
+        elsif SW2 = "001" then
+          if SW3 = "00" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "01" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "10" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "11" then
+            LED_G <= '1';
+            LED_R <= '0';
+          else
+            LED_G <= '1';
+            LED_R <= '1';
+          end if;
+        elsif SW2 = "010" then
+          if SW3 = "00" then
+            LED_G <= '0';
+            LED_R <= '1';
+          elsif SW3 = "01" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "10" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "11" then
+            LED_G <= '1';
+            LED_R <= '0';
+          else
+            LED_G <= '1';
+            LED_R <= '1';
+          end if;
+        elsif SW2 = "100" then
+          if SW3 = "00" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "01" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "10" then
+            LED_G <= '1';
+            LED_R <= '0';
+          elsif SW3 = "11" then
+            LED_G <= '1';
+            LED_R <= '0';
+          else
+            LED_G <= '1';
+            LED_R <= '1';
+          end if;
+        else
+          LED_G <= '1';
+          LED_R <= '1';
+        end if;
+      else
+        LED_G <= '1';
+        LED_R <= '1';
+      end if;
+    end if;
+  end process;
+
+end Behavioral;
