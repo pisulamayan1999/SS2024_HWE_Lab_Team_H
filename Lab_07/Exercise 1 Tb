@@ -1,0 +1,61 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity tb_clock_divider is
+end tb_clock_divider;
+
+architecture Behavioral of tb_clock_divider is
+
+    signal CLK     : std_logic := '0';
+    signal CLK_N   : std_logic;
+    
+    constant CLK_PERIOD : time := 10 ns;  -- Define the period of the main clock
+    
+    -- Instantiate the clock divider
+    component clock_divider
+        generic (
+            N : integer := 2
+        );
+        port (
+            CLK    : in  std_logic;
+            CLK_N  : out std_logic
+        );
+    end component;
+    
+begin
+
+    uut: clock_divider
+        generic map (
+            N => 3  -- Set the division factor, e.g., 3 for divide by 8
+        )
+        port map (
+            CLK => CLK,
+            CLK_N => CLK_N
+        );
+
+    -- Clock generation
+    CLK_process :process
+    begin
+        while true loop
+            CLK <= '0';
+            wait for CLK_PERIOD/2;
+            CLK <= '1';
+            wait for CLK_PERIOD/2;
+        end loop;
+        wait;
+    end process;
+
+    -- Test process
+    test_process :process
+    begin
+        -- Wait for some time to observe the behavior
+        wait for 1000 ns;
+        
+        -- Stop the simulation
+        assert false report "Simulation finished" severity note;
+        wait;
+    end process;
+
+end Behavioral;
