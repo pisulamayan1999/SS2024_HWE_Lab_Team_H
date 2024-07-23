@@ -1,0 +1,90 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity digital_lock is
+    Port (
+        clk         : in  STD_LOGIC;
+        reset       : in  STD_LOGIC;
+        key_press   : in  STD_LOGIC_VECTOR(3 downto 0);
+        enter       : in  STD_LOGIC;
+        lock_button : in  STD_LOGIC;
+        correct     : out STD_LOGIC
+    );
+end digital_lock;
+
+architecture Behavioral of digital_lock is
+
+    type state_type is (Idle, EnterPassword, CheckPassword, Unlocked, Locked);
+    signal state, next_state: state_type;
+
+    signal password_input: STD_LOGIC_VECTOR(3 downto 0);
+
+begin
+
+    -- State transition process
+    process(clk, reset)
+    begin
+        if reset = '1' then
+            state <= Idle;
+        elsif rising_edge(clk) then
+            state <= next_state;
+        end if;
+    end process;
+
+    -- Next state logic process
+    process(state, key_press, enter, lock_button)
+    begin
+        case state is
+            when Idle =>
+                if key_press /= "0000" then
+                    next_state <= EnterPassword;
+                else
+                    next_state <= Idle;
+                end if;
+            when EnterPassword =>
+                if enter = '1' then
+                    next_state <= CheckPassword;
+                else
+                    next_state <= EnterPassword;
+                end if;
+            when CheckPassword =>
+                if password_input = "1100" then -- Example correct password is 1100
+                    next_state <= Unlocked;
+                else
+                    next_state <= Locked;
+                end if;
+            when Unlocked =>
+                if lock_button = '1' then
+                    next_state <= Idle;
+                else
+                    next_state <= Unlocked;
+                end if;
+            when Locked =>
+                next_state <= Idle; -- Automatically go back to Idle after a lock
+            when others =>
+                next_state <= Idle;
+        end case;
+    end process;
+
+    -- Output logic process
+    process(state)
+    begin
+        case state is
+            when Idle =>
+                correct <= '0';
+            when EnterPassword =>
+                correct <= '0';
+            when CheckPassword =>
+                correct <= '0';
+            when Unlocked =>
+                correct <= '1';
+            when Locked =>
+                correct <= '0';
+            when others =>
+                correct <= '0';
+        end case;
+    end process;
+
+end Behavioral;
