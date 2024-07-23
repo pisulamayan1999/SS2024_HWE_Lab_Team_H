@@ -1,0 +1,30 @@
+library std;
+use std.standard.all;
+
+entity ClockDivider is
+    Port ( CLK    : in  bit;
+           RESET  : in  bit;
+           CLK_N  : out bit);
+end ClockDivider;
+
+architecture Behavioral of ClockDivider is
+    constant N : integer := 10;  -- Replace 10 with your desired division factor
+    signal counter : integer range 0 to N-1 := 0;
+    signal clk_div : bit := '0';
+begin
+    process(CLK, RESET)
+    begin
+        if RESET = '1' then
+            counter <= 0;
+            clk_div <= '0';
+        elsif CLK'event and CLK = '1' then
+            if counter = (N-1) then
+                counter <= 0;
+                clk_div <= not clk_div;
+            else
+                counter <= counter + 1;
+            end if;
+        end if;
+    end process;
+    CLK_N <= clk_div;
+end Behavioral;
