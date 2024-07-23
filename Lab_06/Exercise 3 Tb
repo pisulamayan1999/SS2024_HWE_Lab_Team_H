@@ -1,0 +1,78 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity tb_digital_lock is
+end tb_digital_lock;
+
+architecture Behavioral of tb_digital_lock is
+
+    signal clk         : STD_LOGIC := '0';
+    signal reset       : STD_LOGIC := '0';
+    signal key_press   : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+    signal enter       : STD_LOGIC := '0';
+    signal lock_button : STD_LOGIC := '0';
+    signal correct     : STD_LOGIC;
+
+    component digital_lock is
+        Port (
+            clk         : in  STD_LOGIC;
+            reset       : in  STD_LOGIC;
+            key_press   : in  STD_LOGIC_VECTOR(3 downto 0);
+            enter       : in  STD_LOGIC;
+            lock_button : in  STD_LOGIC;
+            correct     : out STD_LOGIC
+        );
+    end component;
+
+begin
+
+    uut: digital_lock
+        port map (
+            clk         => clk,
+            reset       => reset,
+            key_press   => key_press,
+            enter       => enter,
+            lock_button => lock_button,
+            correct     => correct
+        );
+
+    -- Clock generation
+    clk_process: process
+    begin
+        clk <= '0';
+        wait for 10 ns;
+        clk <= '1';
+        wait for 10 ns;
+    end process;
+
+    -- Stimulus process
+    stimulus: process
+    begin
+        -- Reset the system
+        reset <= '1';
+        wait for 20 ns;
+        reset <= '0';
+
+        -- Entering the password 1100
+        key_press <= "1100";
+        wait for 20 ns;
+        enter <= '1';
+        wait for 20 ns;
+        enter <= '0';
+
+        -- Checking if unlocked
+        wait for 40 ns;
+
+        -- Lock the system
+        lock_button <= '1';
+        wait for 20 ns;
+        lock_button <= '0';
+
+        -- Wait and finish
+        wait for 100 ns;
+        wait;
+    end process;
+
+end Behavioral;
