@@ -1,0 +1,93 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+-- Clock Divider Module
+entity Clock_Divider is
+    Port (
+        CLK_IN : in STD_LOGIC;
+        RST : in STD_LOGIC;
+        CLK_OUT : out STD_LOGIC
+    );
+end Clock_Divider;
+
+architecture Behavioral of Clock_Divider is
+    signal counter: UNSIGNED(31 downto 0) := (others => '0');
+    signal clk_reg: STD_LOGIC := '0';
+    constant DIV_FACTOR: integer := 50000000; -- Adjust as necessary
+begin
+    process(CLK_IN, RST)
+    begin
+        if RST = '1' then
+            counter <= (others => '0');
+            clk_reg <= '0';
+        elsif rising_edge(CLK_IN) then
+            if counter = DIV_FACTOR then
+                counter <= (others => '0');
+                clk_reg <= not clk_reg;
+            else
+                counter <= counter + 1;
+            end if;
+        end if;
+    end process;
+    CLK_OUT <= clk_reg;
+end Behavioral;
+
+-- Running Light Module
+entity Running_Light is
+    Port (
+        CLK : in STD_LOGIC;
+        RST : in STD_LOGIC;
+        EN : in STD_LOGIC;
+        LED_Out : out STD_LOGIC_VECTOR(11 downto 0)
+    );
+end Running_Light;
+
+architecture Behavioral of Running_Light is
+    signal LED_reg: STD_LOGIC_VECTOR(11 downto 0) := "000000000001";
+begin
+    process(CLK, RST)
+    begin
+        if RST = '1' then
+            LED_reg <= "000000000001";
+        elsif rising_edge(CLK) then
+            if EN = '1' then
+                LED_reg <= LED_reg(10 downto 0) & LED_reg(11); -- Shift left
+            end if;
+        end if;
+    end process;
+    LED_Out <= LED_reg;
+end Behavioral;
+
+-- Top-Level Module
+entity Top_Module is
+    Port (
+        CLK : in STD_LOGIC;
+        RST : in STD_LOGIC;
+        EN : in STD_LOGIC;
+        LED_Out : out STD_LOGIC_VECTOR(11 downto 0)
+    );
+end Top_Module;
+
+architecture Behavioral of Top_Module is
+    signal slow_clk : STD_LOGIC;
+begin
+    -- Instantiate Clock Divider
+    U1 : entity work.Clock_Divider
+        port map (
+            CLK_IN => CLK,
+            RST => RST,
+            CLK_OUT => slow_clk
+        );
+
+    -- Instantiate Running Light
+    U2 : entity work.Running_Light
+        port map (
+            CLK => slow_clk,
+            RST => RST,
+            EN => EN,
+            LED_Out => LED_Out
+        );
+
+end Behavioral;
